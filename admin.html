@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel - Redeemo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      padding: 20px;
+      max-width: 600px;
+      margin: 30px auto;
+      border-radius: 20px;
+      box-shadow: 0 0 25px rgba(0, 255, 200, 0.3);
+      animation: fadeIn 1s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      text-align: center;
+      color: #00ffc3;
+      font-weight: 600;
+      margin-bottom: 30px;
+    }
+
+    .input-field {
+      margin: 15px 0;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+
+    input, button {
+      padding: 12px;
+      width: 95%;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      background-color: #1a1a1a;
+      color: #fff;
+      transition: all 0.3s ease;
+    }
+
+    input:focus {
+      outline: 2px solid #00ffc3;
+      background-color: #222;
+    }
+
+    button {
+      background: linear-gradient(to right, #00ffc3, #00b897);
+      color: black;
+      font-weight: bold;
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px #00ffc3;
+    }
+
+    .status-msg {
+      text-align: center;
+      margin-top: 20px;
+      font-weight: bold;
+      display: none;
+    }
+
+    .status-msg.success {
+      color: #4caf50;
+    }
+
+    .status-msg.error {
+      color: #f44336;
+    }
+  </style>
+</head>
+<body>
+  <h1><i class="fas fa-user-shield"></i> Admin Panel - Redeemo</h1>
+  
+  <div class="input-field">
+    <label for="newCode"><i class="fas fa-key"></i> New Redeem Code</label>
+    <input type="text" id="newCode" placeholder="Enter code" />
+  </div>
+  
+  <div class="input-field">
+    <label for="reward"><i class="fas fa-gift"></i> Reward</label>
+    <input type="text" id="reward" placeholder="Enter reward (e.g., $5)" />
+  </div>
+
+  <div class="input-field">
+    <label for="expiryDate"><i class="fas fa-calendar-alt"></i> Expiry Date</label>
+    <input type="datetime-local" id="expiryDate" />
+  </div>
+
+  <div class="input-field">
+    <label for="maxUsers"><i class="fas fa-users"></i> Max Users</label>
+    <input type="number" id="maxUsers" placeholder="Enter max users for this code" />
+  </div>
+
+  <button id="createCodeBtn"><i class="fas fa-plus-circle"></i> Create Code</button>
+  
+  <div class="status-msg" id="statusMsg"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCnuX2FG-_k72qYwbltvwg7YW1x-ynL65E",
+      authDomain: "chatc-394ba.firebaseapp.com",
+      databaseURL: "https://chatc-394ba-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "chatc-394ba",
+      storageBucket: "chatc-394ba.appspot.com",
+      messagingSenderId: "525830824984",
+      appId: "1:525830824984:web:e8ab5f5f77e3db25b74f6d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    document.getElementById("createCodeBtn").addEventListener("click", function() {
+      const code = document.getElementById("newCode").value.trim().toUpperCase();
+      const reward = document.getElementById("reward").value.trim();
+      const expiryDate = document.getElementById("expiryDate").value;
+      const maxUsers = parseInt(document.getElementById("maxUsers").value.trim());
+
+      if (!code || !reward || !expiryDate || isNaN(maxUsers) || maxUsers <= 0) {
+        showStatusMsg("Please fill in all fields correctly.", "error");
+        return;
+      }
+
+      const codeData = {
+        reward: reward,
+        expiresAt: expiryDate,
+        maxUsers: maxUsers,
+        usedBy: []
+      };
+
+      const codeRef = ref(db, 'codes/' + code);
+      set(codeRef, codeData)
+        .then(() => {
+          showStatusMsg("Code created successfully!", "success");
+          alert("Redeem code created successfully!");
+        })
+        .catch((error) => {
+          showStatusMsg("Error creating code: " + error.message, "error");
+        });
+    });
+
+    function showStatusMsg(message, type) {
+      const statusMsgElement = document.getElementById("statusMsg");
+      statusMsgElement.textContent = message;
+      statusMsgElement.className = 'status-msg ' + type;
+      statusMsgElement.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

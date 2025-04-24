@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Redeemo - Redeem Your Rewards</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #1a1a1a;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+    .container {
+      width: 100%;
+      max-width: 450px;
+      padding: 20px;
+      text-align: center;
+      background-color: #2a2a2a;
+      border-radius: 10px;
+    }
+    header h1 {
+      font-size: 2em;
+      color: #00ffc3;
+      margin-bottom: 10px;
+    }
+    #userID {
+      font-size: 1.1em;
+      margin-top: 10px;
+    }
+    .redeem-section {
+      margin-top: 30px;
+    }
+    #redeemCode {
+      padding: 10px;
+      margin: 15px 0;
+      width: 80%;
+      border: none;
+      border-radius: 5px;
+      font-size: 1em;
+    }
+    #redeemBtn {
+      background-color: #00ffc3;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1.2em;
+      cursor: pointer;
+    }
+    #redeemBtn:hover {
+      background-color: #00b897;
+    }
+    .result-section {
+      margin-top: 20px;
+    }
+    .hidden {
+      display: none;
+    }
+    #successMsg {
+      color: #4caf50;
+    }
+    #errorMsg {
+      color: #f44336;
+    }
+    button#closeBtn {
+      background-color: #ff5722;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button#closeBtn:hover {
+      background-color: #e64a19;
+    }
+
+    .check-balance-btn {
+      margin-top: 30px;
+      padding: 12px 25px;
+      background-color: #00ffc3;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1em;
+      font-weight: 600;
+      color: #1a1a1a;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.3s;
+    }
+
+    .check-balance-btn:hover {
+      background-color: #00bca4;
+    }
+
+    .spinner {
+      margin-left: 10px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Welcome to Redeemo!</h1>
+      <p id="userID">Your User ID: <span id="userIDText"></span></p>
+    </header>
+
+    <div class="redeem-section">
+      <h2>Enter Your Redeem Code</h2>
+      <input type="text" id="redeemCode" placeholder="Enter Code" />
+      <button id="redeemBtn">Redeem Now</button>
+    </div>
+
+    <div class="result-section">
+      <div id="successMsg" class="hidden">
+        <p>Congratulations! You just won <span id="reward"></span></p>
+        <button id="closeBtn">Close</button>
+      </div>
+      <div id="errorMsg" class="hidden">
+        <p id="errorText"></p>
+      </div>
+    </div>
+
+    <button class="check-balance-btn" id="checkBalanceBtn"><i class="fas fa-wallet"></i>
+      Check Balance
+      <i class="fas fa-spinner fa-spin spinner" id="spinner"></i>
+    </button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+    import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCnuX2FG-_k72qYwbltvwg7YW1x-ynL65E",
+      authDomain: "chatc-394ba.firebaseapp.com",
+      databaseURL: "https://chatc-394ba-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "chatc-394ba",
+      storageBucket: "chatc-394ba.appspot.com",
+      messagingSenderId: "525830824984",
+      appId: "1:525830824984:web:e8ab5f5f77e3db25b74f6d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    function getUserID() {
+      let userId = localStorage.getItem("userID");
+      if (!userId) {
+        userId = "user_" + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem("userID", userId);
+        set(ref(db, 'users/' + userId), {
+          createdAt: new Date().toISOString(),
+          redeemCodesUsed: [],
+          rewards: []
+        });
+      }
+      document.getElementById("userIDText").textContent = userId;
+      return userId;
+    }
+
+    getUserID();
+
+    document.getElementById("redeemBtn").addEventListener("click", function () {
+      const userID = getUserID();
+      const code = document.getElementById("redeemCode").value.trim().toUpperCase();
+      if (!code) {
+        showError("Please enter a redeem code.");
+        return;
+      }
+
+      const codeRef = ref(db, "codes/" + code);
+      get(codeRef).then(snapshot => {
+        if (!snapshot.exists()) {
+          showError("Invalid code! Try again.");
+          return;
+        }
+
+        const data = snapshot.val();
+        const now = new Date();
+        const expiresAt = new Date(data.expiresAt);
+
+        if (expiresAt < now) {
+          showError("This code has expired.");
+          return;
+        }
+
+        if (data.usedBy && data.usedBy.includes(userID)) {
+          showError("You have already redeemed this code.");
+          return;
+        }
+
+        if (data.usedBy && data.usedBy.length >= data.maxUsers) {
+          showError("This code has reached its usage limit.");
+          return;
+        }
+
+        data.usedBy = data.usedBy || [];
+        data.usedBy.push(userID);
+        update(codeRef, { usedBy: data.usedBy });
+
+        showSuccess(data.reward, userID);
+      });
+    });
+
+    function showSuccess(reward, userID) {
+      document.getElementById("reward").textContent = reward;
+      document.getElementById("successMsg").classList.remove("hidden");
+      document.getElementById("errorMsg").classList.add("hidden");
+
+      if (reward.startsWith("₹")) {
+        const amount = parseFloat(reward.replace("₹", ""));
+        let currentBalance = parseFloat(localStorage.getItem("userBalance")) || 0;
+        currentBalance += amount;
+        localStorage.setItem("userBalance", currentBalance.toFixed(2));
+      }
+
+      const userRef = ref(db, "users/" + userID);
+      get(userRef).then(snapshot => {
+        const userData = snapshot.val();
+        let currentRewards = [];
+        if (userData && userData.rewards) {
+          currentRewards = userData.rewards;
+        }
+        currentRewards.push(reward);
+        update(userRef, {
+          rewards: currentRewards
+        });
+      });
+    }
+
+    function showError(message) {
+      document.getElementById("errorText").textContent = message;
+      document.getElementById("errorMsg").classList.remove("hidden");
+      document.getElementById("successMsg").classList.add("hidden");
+    }
+
+    document.getElementById("closeBtn").addEventListener("click", function () {
+      document.getElementById("successMsg").classList.add("hidden");
+      document.getElementById("redeemCode").value = "";
+    });
+
+    // Check Balance Button Spinner + Redirect
+    document.getElementById("checkBalanceBtn").addEventListener("click", () => {
+      const spinner = document.getElementById("spinner");
+      spinner.style.display = "inline-block";
+      setTimeout(() => {
+        window.location.href = "balance.html";
+      }, 1500);
+    });
+  </script>
+</body>
+</html>
