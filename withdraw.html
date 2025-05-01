@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Withdraw Funds</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Withdraw Balance</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     * {
@@ -19,6 +19,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      flex-direction: column;
       min-height: 100vh;
       padding: 20px;
     }
@@ -26,9 +27,10 @@
       background: #2a2a2a;
       padding: 30px;
       border-radius: 10px;
-      width: 100%;
       max-width: 500px;
-      box-shadow: 0 0 15px rgba(0, 255, 195, 0.5);
+      width: 90%;
+      box-shadow: 0 0 15px #00ffc3;
+      position: relative;
     }
     h1 {
       color: #00ffc3;
@@ -87,8 +89,14 @@
     }
     #backBtn {
       margin-top: 20px;
+      padding: 10px 25px;
       background-color: #ff5722;
+      border: none;
+      border-radius: 6px;
       color: #fff;
+      font-size: 1em;
+      cursor: pointer;
+      width: auto;
     }
     #backBtn:hover {
       background-color: #e64a19;
@@ -107,32 +115,93 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    .status-message {
-      padding: 15px;
-      border-radius: 6px;
-      margin-top: 20px;
+    /* Success Popup Styles */
+    .success-popup {
       display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.3s ease;
     }
-    .success {
-      background-color: rgba(0, 255, 195, 0.2);
+    .success-content {
+      background: #2a2a2a;
+      padding: 30px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 0 20px #00ffc3;
+      text-align: center;
+      position: relative;
+    }
+    .success-icon {
+      font-size: 60px;
       color: #00ffc3;
-      border: 1px solid #00ffc3;
+      margin-bottom: 20px;
     }
-    .error {
-      background-color: rgba(255, 87, 34, 0.2);
-      color: #ff5722;
-      border: 1px solid #ff5722;
+    .success-title {
+      font-size: 24px;
+      color: #00ffc3;
+      margin-bottom: 15px;
+    }
+    .success-details {
+      background: #333;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      text-align: left;
+    }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #444;
+    }
+    .detail-row:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .detail-label {
+      color: #aaa;
+    }
+    .detail-value {
+      color: #fff;
+      font-weight: 600;
+    }
+    .close-popup {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .close-popup:hover {
+      color: #fff;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1><i class="fas fa-money-bill-wave"></i> Withdraw Funds</h1>
+    <h1><i class="fas fa-money-bill-wave"></i> Withdraw Balance</h1>
     
     <div id="withdrawForm">
       <div class="form-group">
         <label for="userID">User ID</label>
-        <input type="text" id="userID" readonly>
+        <input type="text" id="userID" value="" readonly>
       </div>
       
       <div class="form-group">
@@ -167,152 +236,136 @@
       <p>Processing your withdrawal...</p>
     </div>
     
-    <div id="statusMessage" class="status-message"></div>
-    
-    <button id="backBtn"><i class="fas fa-arrow-left"></i> Back to Dashboard</button>
+    <button id="backBtn"><i class="fas fa-arrow-left"></i> Back to Balance</button>
+  </div>
+
+  <!-- Success Popup -->
+  <div class="success-popup" id="successPopup">
+    <div class="success-content">
+      <button class="close-popup" id="closePopup">&times;</button>
+      <div class="success-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <h2 class="success-title">Withdrawal Successful!</h2>
+      <div class="success-details" id="successDetails">
+        <!-- Details will be inserted here by JavaScript -->
+      </div>
+      <button id="okButton" class="submitBtn">OK</button>
+    </div>
   </div>
 
   <script>
-    // Server configuration - USE YOUR VERCEL URL HERE
-    const SERVER_URL = 'https://redeemo-serverx.vercel.app';
-    const WITHDRAW_ENDPOINT = `${SERVER_URL}/api/withdraw`;
-    
-    // DOM elements
-    const userIDEl = document.getElementById('userID');
-    const mobileNumberEl = document.getElementById('mobileNumber');
-    const amountEl = document.getElementById('amount');
-    const submitBtn = document.getElementById('submitBtn');
-    const backBtn = document.getElementById('backBtn');
-    const withdrawForm = document.getElementById('withdrawForm');
-    const loader = document.getElementById('loader');
-    const statusMessage = document.getElementById('statusMessage');
+    // Get user data
+    const userID = localStorage.getItem("userID") || "Unknown";
+    const userBalance = parseFloat(localStorage.getItem("userBalance") || "0.00");
+    document.getElementById("userID").value = userID;
+    document.getElementById("amount").max = userBalance.toFixed(2);
 
-    // Initialize form with user data
-    document.addEventListener('DOMContentLoaded', () => {
-      const userID = localStorage.getItem('userID') || 'Guest';
-      const balance = parseFloat(localStorage.getItem('userBalance') || '0');
-      
-      userIDEl.value = userID;
-      amountEl.max = balance.toFixed(2);
-      amountEl.placeholder = `Max: ₹${balance.toFixed(2)}`;
+    // Back button
+    document.getElementById("backBtn").addEventListener("click", () => {
+      window.location.href = "balance.html";
     });
 
-    // Back button handler
-    backBtn.addEventListener('click', () => {
-      window.location.href = 'dashboard.html'; // Update to your actual dashboard page
-    });
+    // Close popup buttons
+    document.getElementById("closePopup").addEventListener("click", closeSuccessPopup);
+    document.getElementById("okButton").addEventListener("click", closeSuccessPopup);
 
     // Withdrawal submission
-    submitBtn.addEventListener('click', async (e) => {
+    document.getElementById("submitBtn").addEventListener("click", async (e) => {
       e.preventDefault();
       
       const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-      const mobileNumber = mobileNumberEl.value;
-      const amount = parseFloat(amountEl.value);
+      const mobileNumber = document.getElementById("mobileNumber").value;
+      const amount = parseFloat(document.getElementById("amount").value);
       
       // Validate inputs
       if (!validateInputs(mobileNumber, amount)) return;
       
-      // Show loader, hide form
-      toggleUIState(true);
+      // Show loader
+      toggleLoader(true);
       
-      try {
-        // Register for push notifications if supported
-        let subscription = null;
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-          subscription = await registerPushNotifications();
-        }
-        
-        // Make API request
-        const response = await fetch(WITHDRAW_ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: userIDEl.value,
-            method: paymentMethod,
-            mobile: mobileNumber,
-            amount: amount,
-            subscription: subscription
-          })
-        });
-        
-        const result = await response.json();
-        
-        if (!response.ok) throw new Error(result.error || 'Withdrawal failed');
-        
-        // Handle success
-        showStatusMessage(`Success! ₹${amount.toFixed(2)} will be sent to ${paymentMethod} (${mobileNumber})`, 'success');
-        
-        // Update local balance
-        updateLocalBalance(amount);
-        
-      } catch (error) {
-        showStatusMessage(`Error: ${error.message}`, 'error');
-        console.error('Withdrawal error:', error);
-      } finally {
-        toggleUIState(false);
-      }
+      // Simulate processing delay
+      setTimeout(() => {
+        // Handle success (no server needed)
+        handleWithdrawalSuccess(paymentMethod, mobileNumber, amount);
+        toggleLoader(false);
+      }, 2000);
     });
 
     // Helper functions
     function validateInputs(mobile, amount) {
       if (!mobile || !amount) {
-        showStatusMessage('Please fill in all fields', 'error');
+        alert("Please fill in all fields");
         return false;
       }
-      
-      const balance = parseFloat(localStorage.getItem('userBalance') || '0');
-      if (amount > balance) {
-        showStatusMessage('Insufficient balance', 'error');
+      if (amount > userBalance) {
+        alert("Insufficient balance");
         return false;
       }
-      
       if (!/^01[0-9]{9}$/.test(mobile)) {
-        showStatusMessage('Please enter a valid 11-digit mobile number', 'error');
+        alert("Please enter 11 digit number");
         return false;
       }
-      
       return true;
     }
 
-    async function registerPushNotifications() {
-      try {
-        const reg = await navigator.serviceWorker.register('/sw.js');
-        const subscription = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(process.env.VAPID_PUBLIC_KEY)
-        });
-        return subscription;
-      } catch (error) {
-        console.error('Push registration failed:', error);
-        return null;
-      }
+    function handleWithdrawalSuccess(method, mobile, amount) {
+      // Update local balance
+      const newBalance = userBalance - amount;
+      localStorage.setItem("userBalance", newBalance.toFixed(2));
+      
+      // Show success popup with details
+      showSuccessPopup({
+        userId: userID,
+        method: method,
+        mobile: mobile,
+        amount: amount.toFixed(2),
+        newBalance: newBalance.toFixed(2)
+      });
+      
+      // Update back button text
+      document.getElementById("backBtn").textContent = "View Updated Balance";
     }
 
-    function toggleUIState(loading) {
-      withdrawForm.style.display = loading ? 'none' : 'block';
-      loader.style.display = loading ? 'block' : 'none';
-      statusMessage.style.display = 'none';
+    function showSuccessPopup(details) {
+      const popup = document.getElementById("successPopup");
+      const detailsContainer = document.getElementById("successDetails");
+      
+      // Create HTML for details
+      detailsContainer.innerHTML = `
+        <div class="detail-row">
+          <span class="detail-label">User ID:</span>
+          <span class="detail-value">${details.userId}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Payment Method:</span>
+          <span class="detail-value">${details.method}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Mobile Number:</span>
+          <span class="detail-value">${details.mobile}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Amount Withdrawn:</span>
+          <span class="detail-value">₹${details.amount}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">New Balance:</span>
+          <span class="detail-value">₹${details.newBalance}</span>
+        </div>
+      `;
+      
+      // Show popup
+      popup.style.display = "flex";
     }
 
-    function showStatusMessage(message, type) {
-      statusMessage.textContent = message;
-      statusMessage.className = `status-message ${type}`;
-      statusMessage.style.display = 'block';
+    function closeSuccessPopup() {
+      document.getElementById("successPopup").style.display = "none";
     }
 
-    function updateLocalBalance(amount) {
-      const currentBalance = parseFloat(localStorage.getItem('userBalance') || '0');
-      const newBalance = currentBalance - amount;
-      localStorage.setItem('userBalance', newBalance.toFixed(2));
-      amountEl.max = newBalance.toFixed(2);
-    }
-
-    function urlBase64ToUint8Array(base64String) {
-      const padding = '='.repeat((4 - base64String.length % 4) % 4);
-      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-      const rawData = window.atob(base64);
-      return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+    function toggleLoader(show) {
+      document.getElementById("withdrawForm").style.display = show ? "none" : "block";
+      document.getElementById("loader").style.display = show ? "block" : "none";
     }
   </script>
 </body>
