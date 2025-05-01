@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Withdraw Balance</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #1a1a1a;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      background: #2a2a2a;
+      padding: 30px;
+      border-radius: 10px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 0 15px #00ffc3;
+    }
+    h1 {
+      color: #00ffc3;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 400;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #444;
+      background-color: #333;
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #00ffc3;
+    }
+    .radio-group {
+      display: flex;
+      gap: 20px;
+      margin-top: 10px;
+    }
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .radio-option input {
+      width: auto;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #00ffc3;
+      color: #1a1a1a;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 1em;
+      margin-top: 10px;
+      transition: all 0.3s ease;
+    }
+    button:hover {
+      background-color: #00e6b0;
+    }
+    #backBtn {
+      margin-top: 20px;
+      padding: 10px 25px;
+      background-color: #ff5722;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 1em;
+      cursor: pointer;
+      width: auto;
+    }
+    #backBtn:hover {
+      background-color: #e64a19;
+    }
+    #loader {
+      display: none;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .spinner {
+      animation: spin 1s linear infinite;
+      font-size: 2em;
+      color: #00ffc3;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .success-message {
+      display: none;
+      text-align: center;
+      color: #00ffc3;
+      margin-top: 20px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fas fa-money-bill-wave"></i> Withdraw Balance</h1>
+    
+    <div id="withdrawForm">
+      <div class="form-group">
+        <label for="userID">User ID</label>
+        <input type="text" id="userID" value="" readonly>
+      </div>
+      
+      <div class="form-group">
+        <label>Payment Method</label>
+        <div class="radio-group">
+          <div class="radio-option">
+            <input type="radio" id="bkash" name="paymentMethod" value="bkash" checked>
+            <label for="bkash">bKash</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" id="nagad" name="paymentMethod" value="nagad">
+            <label for="nagad">Nagad</label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="mobileNumber">Mobile Number</label>
+        <input type="tel" id="mobileNumber" placeholder="01XXXXXXXXX" pattern="[0-9]{11}" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="amount">Amount (₹)</label>
+        <input type="number" id="amount" placeholder="Enter amount to withdraw" min="1" required>
+      </div>
+      
+      <button id="submitBtn">Withdraw Now</button>
+    </div>
+    
+    <div id="loader">
+      <div class="spinner"><i class="fas fa-spinner"></i></div>
+      <p>Processing your withdrawal...</p>
+    </div>
+    
+    <div class="success-message" id="successMessage">
+      <p><i class="fas fa-check-circle"></i> Withdrawal successful!</p>
+      <p id="withdrawalDetails"></p>
+    </div>
+    
+    <button id="backBtn"><i class="fas fa-arrow-left"></i> Back to Balance</button>
+  </div>
+
+  <script>
+    // Server configuration
+    const SERVER_URL = 'https://redeemo-server.vercel.app';
+    const WITHDRAW_ENDPOINT = `${SERVER_URL}/api/withdraw`;
+    const VAPID_PUBLIC_KEY = "BKvuum6G33f0MjIYAOAXN7878pHW3xSrF26HO9VlNPibhe3ATI5RbfmUWVYPdM7FThBWBI5PfpqGJJIHUxEgUpA";
+
+    // Get user data
+    const userID = localStorage.getItem("userID") || "Unknown";
+    const userBalance = parseFloat(localStorage.getItem("userBalance") || "0.00");
+    document.getElementById("userID").value = userID;
+    document.getElementById("amount").max = userBalance.toFixed(2);
+
+    // Back button
+    document.getElementById("backBtn").addEventListener("click", () => {
+      window.location.href = "balance.html";
+    });
+
+    // Withdrawal submission
+    document.getElementById("submitBtn").addEventListener("click", async (e) => {
+      e.preventDefault();
+      
+      const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+      const mobileNumber = document.getElementById("mobileNumber").value;
+      const amount = parseFloat(document.getElementById("amount").value);
+      
+      // Validate inputs
+      if (!validateInputs(mobileNumber, amount)) return;
+      
+      // Show loader
+      toggleLoader(true);
+      
+      try {
+        // Register for push notifications if supported
+        let subscription = null;
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+          subscription = await registerPushNotifications();
+        }
+        
+        // Make API request
+        const response = await fetch(WITHDRAW_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: userID,
+            method: paymentMethod,
+            mobile: mobileNumber,
+            amount: amount,
+            subscription: subscription
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) throw new Error(result.error || 'Withdrawal failed');
+        
+        // Handle success
+        handleWithdrawalSuccess(result, paymentMethod, mobileNumber, amount);
+      } catch (error) {
+        handleWithdrawalError(error);
+      } finally {
+        toggleLoader(false);
+      }
+    });
+
+    // Helper functions
+    function validateInputs(mobile, amount) {
+      if (!mobile || !amount) {
+        alert("Please fill in all fields");
+        return false;
+      }
+      if (amount > userBalance) {
+        alert("Insufficient balance");
+        return false;
+      }
+      if (!/^01[0-9]{9}$/.test(mobile)) {
+        alert("Please enter a valid Bangladeshi mobile number");
+        return false;
+      }
+      return true;
+    }
+
+    async function registerPushNotifications() {
+      try {
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        const subscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+        return subscription;
+      } catch (error) {
+        console.error('Push registration failed:', error);
+        return null;
+      }
+    }
+
+    function handleWithdrawalSuccess(result, method, mobile, amount) {
+      document.getElementById("withdrawalDetails").textContent = 
+        `₹${amount.toFixed(2)} has been sent to your ${method} account (${mobile})`;
+      document.getElementById("successMessage").style.display = "block";
+      
+      // Update local balance
+      localStorage.setItem("userBalance", (userBalance - amount).toFixed(2));
+      
+      // Update back button
+      document.getElementById("backBtn").textContent = "View Updated Balance";
+    }
+
+    function handleWithdrawalError(error) {
+      console.error('Withdrawal error:', error);
+      alert(`Withdrawal failed: ${error.message}`);
+      document.getElementById("withdrawForm").style.display = "block";
+    }
+
+    function toggleLoader(show) {
+      document.getElementById("withdrawForm").style.display = show ? "none" : "block";
+      document.getElementById("loader").style.display = show ? "block" : "none";
+    }
+
+    function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const rawData = atob(base64);
+      return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+    }
+
+    // Request notification permission
+    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+      Notification.requestPermission();
+    }
+  </script>
+</body>
+</html>
