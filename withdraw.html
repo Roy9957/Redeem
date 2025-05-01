@@ -177,16 +177,17 @@
     }
     .close-popup {
       position: absolute;
-      top: 10px;
+      top: 5px;
       right: 10px;
+      width: 20%;
       background: none;
       border: none;
-      color: #aaa;
+      color: #FFFFFF;
       font-size: 20px;
-      cursor: pointer;
+     
     }
     .close-popup:hover {
-      color: #fff;
+      color: #FF0000;
     }
     @keyframes fadeIn {
       from { opacity: 0; }
@@ -225,7 +226,7 @@
       
       <div class="form-group">
         <label for="amount">Amount (₹)</label>
-        <input type="number" id="amount" placeholder="Enter amount to withdraw" min="1" required>
+        <input type="number" id="amount" placeholder="Enter amount to withdraw (minimum ₹50)" min="50" required>
       </div>
       
       <button id="submitBtn">Withdraw Now</button>
@@ -242,7 +243,7 @@
   <!-- Success Popup -->
   <div class="success-popup" id="successPopup">
     <div class="success-content">
-      <button class="close-popup" id="closePopup">&times;</button>
+      <button class="close-popup" id="closePopup">✘</button>
       <div class="success-icon">
         <i class="fas fa-check-circle"></i>
       </div>
@@ -298,12 +299,16 @@
         alert("Please fill in all fields");
         return false;
       }
+      if (amount < 50) {
+        alert("You cannot withdraw less than ₹50");
+        return false;
+      }
       if (amount > userBalance) {
         alert("Insufficient balance");
         return false;
       }
       if (!/^01[0-9]{9}$/.test(mobile)) {
-        alert("Please enter 11 digit number");
+        alert("Please enter a valid 11 digit mobile number starting with 01");
         return false;
       }
       return true;
