@@ -77,20 +77,45 @@
     #backBtn:hover {
       background-color: #e64a19;
     }
+    #goBtn{
+      position: absolute;
+      top: 2%;
+      right: 5%;
+      border-radius: 6px;
+      padding: 10px 10px;
+      color: #fff;
+      font-size: 1rem;
+      border: none;
+      background-color: #ff5722;
+    }
+    #goBtn:active{
+      position: absolute;
+      top: 2%;
+      right: 5%;
+      border-radius: 15px;
+      padding: 10px 10px;
+      color: #000;
+      font-size: 1rem;
+      border: none;
+      background-color: #FF2235;
+      box-shadow: 0 2px 20px 10px rgba(246, 156, 92, 1);
+    }
   </style>
 </head>
 <body>
+  <button  id="goBtn">Withdraw <i class="fas fa-arrow-right"></i></button>
   <div class="container">
     <h1>Your Current Balance</h1>
     <p>User ID: <span id="userIDText"></span></p>
     <div class="balance" id="balanceBox">₹<span id="balanceAmount">0</span></div>
     <div class="loader" id="loader"><i class="fas fa-spinner"></i></div>
     <button id="backBtn"><i class="fas fa-arrow-left"></i> Back to Redeem</button>
-  </div>
+    </div>
 
   <script>
     const userID = localStorage.getItem("userID") || "Unknown";
     const balance = localStorage.getItem("userBalance") || "0.00";
+    
     document.getElementById("userIDText").textContent = userID;
     document.getElementById("balanceAmount").textContent = parseFloat(balance).toFixed(2);
 
@@ -111,6 +136,12 @@
         location.reload();
       }, 2000);
     });
+    
+   
+  document.getElementById("goBtn").addEventListener("click", function() {
+    window.location.href = "withdraw.html";
+  });
+
   </script>
 </body>
 </html>
