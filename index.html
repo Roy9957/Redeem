@@ -4,109 +4,380 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Redeemo - Redeem Your Rewards</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
+    :root {
+      --primary: #00ffc3;
+      --primary-dark: #00b897;
+      --secondary: #ff5722;
+      --secondary-dark: #e64a19;
+      --bg-dark: #1a1a1a;
+      --bg-darker: #121212;
+      --card-bg: #2a2a2a;
+      --text-light: #f5f5f5;
+      --success: #4caf50;
+      --error: #f44336;
+      --shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+    
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
+    
     body {
       font-family: 'Poppins', sans-serif;
-      background-color: #1a1a1a;
-      color: #fff;
+      background: linear-gradient(135deg, var(--bg-dark), var(--bg-darker));
+      color: var(--text-light);
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      min-height: 100vh;
       flex-direction: column;
+      padding: 20px;
+      background-attachment: fixed;
     }
+    
     .container {
       width: 100%;
-      max-width: 450px;
-      padding: 20px;
+      max-width: 480px;
+      padding: 30px;
       text-align: center;
-      background-color: #2a2a2a;
-      border-radius: 10px;
+      background-color: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      transform: translateY(0);
+      opacity: 1;
+      transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+      position: relative;
+      overflow: hidden;
     }
+    
+    .container::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(0,255,195,0.1) 0%, rgba(0,0,0,0) 70%);
+      animation: rotate 20s linear infinite;
+      z-index: -1;
+    }
+    
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    header {
+      margin-bottom: 30px;
+      position: relative;
+    }
+    
     header h1 {
-      font-size: 2em;
-      color: #00ffc3;
+      font-size: 2.5em;
+      background: linear-gradient(to right, var(--primary), #00e676);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
       margin-bottom: 10px;
+      text-shadow: 0 2px 10px rgba(0, 255, 195, 0.2);
+      letter-spacing: 1px;
+      animation: textGlow 2s ease-in-out infinite alternate;
     }
+    
+    @keyframes textGlow {
+      0% { text-shadow: 0 0 5px rgba(0, 255, 195, 0.3); }
+      100% { text-shadow: 0 0 20px rgba(0, 255, 195, 0.5); }
+    }
+    
     #userID {
       font-size: 1.1em;
-      margin-top: 10px;
+      margin-top: 15px;
+      color: rgba(255, 255, 255, 0.8);
+      background: rgba(0, 0, 0, 0.2);
+      padding: 8px 15px;
+      border-radius: 50px;
+      display: inline-block;
+      transition: all 0.3s ease;
     }
+    
+    #userID:hover {
+      background: rgba(0, 0, 0, 0.3);
+      transform: scale(1.02);
+    }
+    
     .redeem-section {
       margin-top: 30px;
+      animation: fadeIn 0.8s ease-out;
     }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .redeem-section h2 {
+      font-size: 1.5em;
+      margin-bottom: 20px;
+      color: var(--text-light);
+      position: relative;
+      display: inline-block;
+    }
+    
+    .redeem-section h2::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 3px;
+      background: var(--primary);
+      border-radius: 3px;
+    }
+    
     #redeemCode {
-      padding: 10px;
-      margin: 15px 0;
-      width: 80%;
-      border: none;
-      border-radius: 5px;
-      font-size: 1em;
-    }
-    #redeemBtn {
-      background-color: #00ffc3;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 5px;
-      font-size: 1.2em;
-      cursor: pointer;
-    }
-    #redeemBtn:hover {
-      background-color: #00b897;
-    }
-    .result-section {
-      margin-top: 20px;
-    }
-    .hidden {
-      display: none;
-    }
-    #successMsg {
-      color: #4caf50;
-    }
-    #errorMsg {
-      color: #f44336;
-    }
-    button#closeBtn {
-      background-color: #ff5722;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button#closeBtn:hover {
-      background-color: #e64a19;
-    }
-
-    .check-balance-btn {
-      margin-top: 30px;
-      padding: 12px 25px;
-      background-color: #00ffc3;
+      padding: 15px;
+      margin: 20px 0;
+      width: 100%;
       border: none;
       border-radius: 8px;
       font-size: 1.1em;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    #redeemCode:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 255, 195, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    #redeemCode::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    #redeemBtn {
+      background: linear-gradient(to right, var(--primary), var(--primary-dark));
+      color: #1a1a1a;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.2em;
       font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 255, 195, 0.3);
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      margin-top: 10px;
+    }
+    
+    #redeemBtn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 255, 195, 0.4);
+    }
+    
+    #redeemBtn:active {
+      transform: translateY(0);
+    }
+    
+    #redeemBtn::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to right, rgba(255,255,255,0.1), rgba(255,255,255,0));
+      transform: translateX(-100%);
+      transition: transform 0.6s ease;
+    }
+    
+    #redeemBtn:hover::after {
+      transform: translateX(100%);
+    }
+    
+    .result-section {
+      margin-top: 30px;
+      animation: fadeIn 0.8s ease-out;
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    #successMsg {
+      background: rgba(76, 175, 80, 0.1);
+      padding: 20px;
+      border-radius: 10px;
+      border-left: 4px solid var(--success);
+      margin-bottom: 20px;
+      animation: slideIn 0.5s ease-out;
+    }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    #successMsg p {
+      font-size: 1.2em;
+      margin-bottom: 15px;
+      color: var(--success);
+    }
+    
+    #reward {
+      font-weight: 700;
+      font-size: 1.3em;
+      color: var(--primary);
+    }
+    
+    #errorMsg {
+      background: rgba(244, 67, 54, 0.1);
+      padding: 20px;
+      border-radius: 10px;
+      border-left: 4px solid var(--error);
+      margin-bottom: 20px;
+      animation: shake 0.5s ease-out;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+    
+    #errorMsg p {
+      font-size: 1.1em;
+      color: var(--error);
+    }
+    
+    button#closeBtn {
+      background: linear-gradient(to right, var(--secondary), var(--secondary-dark));
+      color: white;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 87, 34, 0.3);
+    }
+    
+    button#closeBtn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 87, 34, 0.4);
+    }
+    
+    .check-balance-btn {
+      margin-top: 40px;
+      padding: 15px 30px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1em;
+      font-weight: 700;
       color: #1a1a1a;
       cursor: pointer;
       position: relative;
-      transition: background 0.3s;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 8px 25px rgba(0, 255, 195, 0.3);
+      overflow: hidden;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
     }
-
+    
     .check-balance-btn:hover {
-      background-color: #00bca4;
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 12px 30px rgba(0, 255, 195, 0.4);
     }
-
+    
+    .check-balance-btn:active {
+      transform: translateY(0) scale(0.98);
+    }
+    
+    .check-balance-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: 0.5s;
+    }
+    
+    .check-balance-btn:hover::before {
+      left: 100%;
+    }
+    
     .spinner {
-      margin-left: 10px;
       display: none;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: #f00;
+      opacity: 0;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 500px) {
+      .container {
+        padding: 20px;
+        border-radius: 12px;
+      }
+      
+      header h1 {
+        font-size: 2em;
+      }
+      
+      #redeemBtn, .check-balance-btn {
+        padding: 12px 20px;
+      }
+    }
+    
+    /* Floating animation for container */
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    .container {
+      animation: float 6s ease-in-out infinite;
+    }
+    
+    /* Pulse animation for redeem button */
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(0, 255, 195, 0.7); }
+      70% { box-shadow: 0 0 0 15px rgba(0, 255, 195, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 255, 195, 0); }
+    }
+    
+    .pulse {
+      animation: pulse 2s infinite;
     }
   </style>
 </head>
@@ -119,23 +390,24 @@
 
     <div class="redeem-section">
       <h2>Enter Your Redeem Code</h2>
-      <input type="text" id="redeemCode" placeholder="Enter Code" />
-      <button id="redeemBtn">Redeem Now</button>
+      <input type="text" id="redeemCode" placeholder="Enter Code Here" />
+      <button id="redeemBtn" class="pulse">Redeem Now <i class="fas fa-gift"></i></button>
     </div>
 
     <div class="result-section">
       <div id="successMsg" class="hidden">
-        <p>Congratulations! You just won <span id="reward"></span></p>
-        <button id="closeBtn">Close</button>
+        <p>🎉 Congratulations! You just won <span id="reward"></span> 🎉</p>
+        <button id="closeBtn">Close <i class="fas fa-times"></i></button>
       </div>
       <div id="errorMsg" class="hidden">
         <p id="errorText"></p>
       </div>
     </div>
 
-    <button class="check-balance-btn" id="checkBalanceBtn"><i class="fas fa-wallet"></i>
-      Check Balance
-      <i class="fas fa-spinner fa-spin spinner" id="spinner"></i>
+    <button class="check-balance-btn" id="checkBalanceBtn">
+      <i class="fas fa-wallet"></i>
+      Check Your Balance
+      <i class="fas fa-spinner spinner" id="spinner"></i>
     </button>
   </div>
 
@@ -166,12 +438,26 @@
           redeemCodesUsed: [],
           rewards: []
         });
+        
+        // Animate new user creation
+        document.querySelector('.container').style.animation = 'none';
+        setTimeout(() => {
+          document.querySelector('.container').style.animation = 'float 6s ease-in-out infinite';
+        }, 10);
       }
       document.getElementById("userIDText").textContent = userId;
       return userId;
     }
 
-    getUserID();
+    // Initialize with animation
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        document.querySelector('.container').style.opacity = '1';
+        document.querySelector('.container').style.transform = 'translateY(0)';
+      }, 100);
+      
+      getUserID();
+    });
 
     document.getElementById("redeemBtn").addEventListener("click", function () {
       const userID = getUserID();
@@ -181,10 +467,17 @@
         return;
       }
 
+      // Add loading state
+      const btn = document.getElementById("redeemBtn");
+      btn.innerHTML = 'Processing... <i class="fas fa-spinner fa-spin"></i>';
+      btn.disabled = true;
+
       const codeRef = ref(db, "codes/" + code);
       get(codeRef).then(snapshot => {
         if (!snapshot.exists()) {
           showError("Invalid code! Try again.");
+          btn.innerHTML = 'Redeem Now <i class="fas fa-gift"></i>';
+          btn.disabled = false;
           return;
         }
 
@@ -194,16 +487,22 @@
 
         if (expiresAt < now) {
           showError("This code has expired.");
+          btn.innerHTML = 'Redeem Now <i class="fas fa-gift"></i>';
+          btn.disabled = false;
           return;
         }
 
         if (data.usedBy && data.usedBy.includes(userID)) {
           showError("You have already redeemed this code.");
+          btn.innerHTML = 'Redeem Now <i class="fas fa-gift"></i>';
+          btn.disabled = false;
           return;
         }
 
         if (data.usedBy && data.usedBy.length >= data.maxUsers) {
           showError("This code has reached its usage limit.");
+          btn.innerHTML = 'Redeem Now <i class="fas fa-gift"></i>';
+          btn.disabled = false;
           return;
         }
 
@@ -211,7 +510,17 @@
         data.usedBy.push(userID);
         update(codeRef, { usedBy: data.usedBy });
 
-        showSuccess(data.reward, userID);
+        // Add slight delay for better UX
+        setTimeout(() => {
+          showSuccess(data.reward, userID);
+          btn.innerHTML = 'Redeem Now <i class="fas fa-gift"></i>';
+          btn.disabled = false;
+          createConfetti();
+        }, 800);
+      }).catch(error => {
+        showError("An error occurred. Please try again.");
+        btn.innerHTML = 'Redeem Now <i class="fas fa-gift"></i>';
+        btn.disabled = false;
       });
     });
 
@@ -252,14 +561,73 @@
       document.getElementById("redeemCode").value = "";
     });
 
-    // Check Balance Button Spinner + Redirect
-    document.getElementById("checkBalanceBtn").addEventListener("click", () => {
+    // Check Balance Button with enhanced animation
+    document.getElementById("checkBalanceBtn").addEventListener("click", (e) => {
+      e.preventDefault();
       const spinner = document.getElementById("spinner");
       spinner.style.display = "inline-block";
+      document.getElementById("checkBalanceBtn").disabled = true;
+      
+      // Add ripple effect
+      const btn = e.target;
+      const rect = btn.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const ripple = document.createElement("span");
+      ripple.style.position = "absolute";
+      ripple.style.width = "5px";
+      ripple.style.height = "5px";
+      ripple.style.borderRadius = "50%";
+      ripple.style.backgroundColor = "rgba(255,255,255,0.5)";
+      ripple.style.left = `${x}px`;
+      ripple.style.top = `${y}px`;
+      ripple.style.transform = "translate(-50%, -50%)";
+      ripple.style.animation = "ripple 1s linear";
+      btn.appendChild(ripple);
+      
+      setTimeout(() => {
+        ripple.remove();
+      }, 1000);
+      
       setTimeout(() => {
         window.location.href = "balance.html";
       }, 1500);
     });
+    
+    // Confetti effect
+    function createConfetti() {
+      const colors = ['#00ffc3', '#ff5722', '#ffeb3b', '#e91e63', '#9c27b0', '#3f51b5'];
+      const container = document.querySelector('.container');
+      
+      for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.top = -10 + 'px';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.width = Math.random() * 8 + 5 + 'px';
+        confetti.style.height = Math.random() * 8 + 5 + 'px';
+        confetti.style.opacity = '1';
+        confetti.style.position = 'absolute';
+        confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+        container.appendChild(confetti);
+        
+        const animationDuration = Math.random() * 3 + 2;
+        
+        confetti.animate([
+          { transform: `translate(0, 0) rotate(0deg)`, opacity: 1 },
+          { transform: `translate(${Math.random() * 200 - 100}px, ${window.innerHeight}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+        ], {
+          duration: animationDuration * 1000,
+          easing: 'cubic-bezier(0.1, 0.8, 0.9, 1)'
+        });
+        
+        setTimeout(() => {
+          confetti.remove();
+        }, animationDuration * 1000);
+      }
+    }
   </script>
 </body>
 </html>
