@@ -117,6 +117,7 @@
   <div class="status-msg" id="statusMsg"></div>
 
   <script type="module">
+    // Firebase Configuration
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
     import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
 
@@ -132,6 +133,9 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+
+    // Google Sheets Configuration
+    const sheetEndpoint = "https://v1.nocodeapi.com/roy9957/google_sheets/GiEQfwrryGzHCOHe?tabId=Sheet1";
 
     document.getElementById("createCodeBtn").addEventListener("click", function() {
       const code = document.getElementById("newCode").value.trim().toUpperCase();
@@ -156,6 +160,24 @@
         .then(() => {
           showStatusMsg("Code created successfully!", "success");
           alert("Redeem code created successfully!");
+
+          // Append data to Google Sheets
+          const sheetData = [[code, reward, expiryDate, maxUsers]];
+          fetch(sheetEndpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(sheetData)
+          })
+          .then(response => response.json())
+          .then(result => {
+            console.log("Data appended to Google Sheets:", result);
+          })
+          .catch(error => {
+            console.error("Error appending data to Google Sheets:", error);
+          });
+
         })
         .catch((error) => {
           showStatusMsg("Error creating code: " + error.message, "error");
