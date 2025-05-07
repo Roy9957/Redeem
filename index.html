@@ -412,222 +412,250 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
-    import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyCnuX2FG-_k72qYwbltvwg7YW1x-ynL65E",
-      authDomain: "chatc-394ba.firebaseapp.com",
-      databaseURL: "https://chatc-394ba-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "chatc-394ba",
-      storageBucket: "chatc-394ba.appspot.com",
-      messagingSenderId: "525830824984",
-      appId: "1:525830824984:web:e8ab5f5f77e3db25b74f6d"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    function getUserID() {
-      let userId = localStorage.getItem("userID");
-      if (!userId) {
-        userId = "user_" + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem("userID", userId);
-        set(ref(db, 'users/' + userId), {
-          createdAt: new Date().toISOString(),
-          redeemCodesUsed: [],
-          rewards: []
-        });
-        
-        // Animate new user creation
-        document.querySelector('.container').style.animation = 'none';
-        setTimeout(() => {
-          document.querySelector('.container').style.animation = 'float 6s ease-in-out infinite';
-        }, 10);
-      }
-      document.getElementById("userIDText").textContent = userId;
-      return userId;
-    }
-
-    // Initialize with animation
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
-        document.querySelector('.container').style.opacity = '1';
-        document.querySelector('.container').style.transform = 'translateY(0)';
-      }, 100);
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+  import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-database.js";
+  
+  const firebaseConfig = {
+    apiKey: "AIzaSyCnuX2FG-_k72qYwbltvwg7YW1x-ynL65E",
+    authDomain: "chatc-394ba.firebaseapp.com",
+    databaseURL: "https://chatc-394ba-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "chatc-394ba",
+    storageBucket: "chatc-394ba.appspot.com",
+    messagingSenderId: "525830824984",
+    appId: "1:525830824984:web:e8ab5f5f77e3db25b74f6d"
+  };
+  
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const sheetsApiUrl = "https://v1.nocodeapi.com/roy9957/google_sheets/EppIAqJDWFTKcpEi?tabId=sheet1";
+  
+  function getUserID() {
+    let userId = localStorage.getItem("userID");
+    if (!userId) {
+      userId = "user_" + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem("userID", userId);
+      set(ref(db, 'users/' + userId), {
+        createdAt: new Date().toISOString(),
+        redeemCodesUsed: [],
+        rewards: []
+      });
       
-      getUserID();
-    });
-
-    document.getElementById("redeemBtn").addEventListener("click", function () {
-      const userID = getUserID();
-      const code = document.getElementById("redeemCode").value.trim().toUpperCase();
-      if (!code) {
-        showError("Please enter a redeem code.");
-        return;
+      // Animate new user creation
+      document.querySelector('.container').style.animation = 'none';
+      setTimeout(() => {
+        document.querySelector('.container').style.animation = 'float 6s ease-in-out infinite';
+      }, 10);
+    }
+    document.getElementById("userIDText").textContent = userId;
+    return userId;
+  }
+  
+  // Initialize with animation
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      document.querySelector('.container').style.opacity = '1';
+      document.querySelector('.container').style.transform = 'translateY(0)';
+    }, 100);
+    
+    getUserID();
+  });
+  
+  async function logToGoogleSheets(userID, code, status) {
+    try {
+      const response = await fetch(sheetsApiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify([
+          [userID, code, status, new Date().toISOString()]
+        ])
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to log to Google Sheets');
       }
-
-      // Add loading state
-      const btn = document.getElementById("redeemBtn");
-      btn.innerHTML = 'Processing... <i class="fas fa-spinner fa-spin"></i>';
-      btn.disabled = true;
-
-      const codeRef = ref(db, "codes/" + code);
-      get(codeRef).then(snapshot => {
-        if (!snapshot.exists()) {
-          showError("Invalid code! Try again.");
-          btn.innerHTML = 'Redeem Now <i class="fas fa-gift"></i>';
-          btn.disabled = false;
-          return;
-        }
-
-        const data = snapshot.val();
-        const now = new Date();
-        const expiresAt = new Date(data.expiresAt);
-
-        if (expiresAt < now) {
-          showError("This code has expired.");
-          btn.innerHTML = 'Redeem Now <i class="fas fa-gift"></i>';
-          btn.disabled = false;
-          return;
-        }
-
-        if (data.usedBy && data.usedBy.includes(userID)) {
-          showError("You have already redeemed this code.");
-          btn.innerHTML = 'Redeem Now <i class="fas fa-gift"></i>';
-          btn.disabled = false;
-          return;
-        }
-
-        if (data.usedBy && data.usedBy.length >= data.maxUsers) {
-          showError("This code has reached its usage limit.");
-          btn.innerHTML = 'Redeem Now <i class="fas fa-gift"></i>';
-          btn.disabled = false;
-          return;
-        }
-
-        data.usedBy = data.usedBy || [];
-        data.usedBy.push(userID);
-        update(codeRef, { usedBy: data.usedBy });
-
-        // Add slight delay for better UX
-        setTimeout(() => {
-          showSuccess(data.reward, userID);
-          btn.innerHTML = 'Redeem Now <i class="fas fa-gift"></i>';
-          btn.disabled = false;
-          createConfetti();
-        }, 800);
-      }).catch(error => {
-        showError("An error occurred. Please try again.");
+    } catch (error) {
+      console.error('Error logging to Google Sheets:', error);
+    }
+  }
+  
+  document.getElementById("redeemBtn").addEventListener("click", async function() {
+    const userID = getUserID();
+    const code = document.getElementById("redeemCode").value.trim().toUpperCase();
+    if (!code) {
+      showError("Please enter a redeem code.");
+      await logToGoogleSheets(userID, code, "NO - Empty code");
+      return;
+    }
+    
+    // Add loading state
+    const btn = document.getElementById("redeemBtn");
+    btn.innerHTML = 'Processing... <i class="fas fa-spinner fa-spin"></i>';
+    btn.disabled = true;
+    
+    const codeRef = ref(db, "codes/" + code);
+    get(codeRef).then(async (snapshot) => {
+      if (!snapshot.exists()) {
+        showError("Invalid code! Try again.");
+        await logToGoogleSheets(userID, code, "NO - Invalid code");
         btn.innerHTML = 'Redeem Now <i class="fas fa-gift"></i>';
         btn.disabled = false;
-      });
-    });
-
-    function showSuccess(reward, userID) {
-      document.getElementById("reward").textContent = reward;
-      document.getElementById("successMsg").classList.remove("hidden");
-      document.getElementById("errorMsg").classList.add("hidden");
-
-      if (reward.startsWith("₹")) {
-        const amount = parseFloat(reward.replace("₹", ""));
-        let currentBalance = parseFloat(localStorage.getItem("userBalance")) || 0;
-        currentBalance += amount;
-        localStorage.setItem("userBalance", currentBalance.toFixed(2));
+        return;
       }
-
-      const userRef = ref(db, "users/" + userID);
-      get(userRef).then(snapshot => {
-        const userData = snapshot.val();
-        let currentRewards = [];
-        if (userData && userData.rewards) {
-          currentRewards = userData.rewards;
-        }
-        currentRewards.push(reward);
-        update(userRef, {
-          rewards: currentRewards
-        });
-      });
-    }
-
-    function showError(message) {
-      document.getElementById("errorText").textContent = message;
-      document.getElementById("errorMsg").classList.remove("hidden");
-      document.getElementById("successMsg").classList.add("hidden");
-    }
-
-    document.getElementById("closeBtn").addEventListener("click", function () {
-      document.getElementById("successMsg").classList.add("hidden");
-      document.getElementById("redeemCode").value = "";
+      
+      const data = snapshot.val();
+      const now = new Date();
+      const expiresAt = new Date(data.expiresAt);
+      
+      if (expiresAt < now) {
+        showError("This code has expired.");
+        await logToGoogleSheets(userID, code, "NO - Expired");
+        btn.innerHTML = 'Redeem Now <i class="fas fa-gift"></i>';
+        btn.disabled = false;
+        return;
+      }
+      
+      if (data.usedBy && data.usedBy.includes(userID)) {
+        showError("You have already redeemed this code.");
+        await logToGoogleSheets(userID, code, "NO - Already used");
+        btn.innerHTML = 'Redeem Now <i class="fas fa-gift"></i>';
+        btn.disabled = false;
+        return;
+      }
+      
+      if (data.usedBy && data.usedBy.length >= data.maxUsers) {
+        showError("This code has reached its usage limit.");
+        await logToGoogleSheets(userID, code, "NO - Usage limit reached");
+        btn.innerHTML = 'Redeem Now <i class="fas fa-gift"></i>';
+        btn.disabled = false;
+        return;
+      }
+      
+      data.usedBy = data.usedBy || [];
+      data.usedBy.push(userID);
+      update(codeRef, { usedBy: data.usedBy });
+      
+      // Add slight delay for better UX
+      setTimeout(async () => {
+        showSuccess(data.reward, userID);
+        await logToGoogleSheets(userID, code, "YES - Success🎉");
+        btn.innerHTML = 'Redeem Now <i class="fas fa-gift"></i>';
+        btn.disabled = false;
+        createConfetti();
+      }, 800);
+    }).catch(async (error) => {
+      showError("An error occurred. Please try again.");
+      await logToGoogleSheets(userID, code, "NO - Error: " + error.message);
+      btn.innerHTML = 'Redeem Now <i class="fas fa-gift"></i>';
+      btn.disabled = false;
     });
-
-    // Check Balance Button with enhanced animation
-    document.getElementById("checkBalanceBtn").addEventListener("click", (e) => {
-      e.preventDefault();
-      const spinner = document.getElementById("spinner");
-      spinner.style.display = "inline-block";
-      document.getElementById("checkBalanceBtn").disabled = true;
-      
-      // Add ripple effect
-      const btn = e.target;
-      const rect = btn.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      
-      const ripple = document.createElement("span");
-      ripple.style.position = "absolute";
-      ripple.style.width = "5px";
-      ripple.style.height = "5px";
-      ripple.style.borderRadius = "50%";
-      ripple.style.backgroundColor = "rgba(255,255,255,0.5)";
-      ripple.style.left = `${x}px`;
-      ripple.style.top = `${y}px`;
-      ripple.style.transform = "translate(-50%, -50%)";
-      ripple.style.animation = "ripple 1s linear";
-      btn.appendChild(ripple);
-      
-      setTimeout(() => {
-        ripple.remove();
-      }, 1000);
-      
-      setTimeout(() => {
-        window.location.href = "balance.html";
-      }, 1500);
-    });
+  });
+  
+  function showSuccess(reward, userID) {
+    document.getElementById("reward").textContent = reward;
+    document.getElementById("successMsg").classList.remove("hidden");
+    document.getElementById("errorMsg").classList.add("hidden");
     
-    // Confetti effect
-    function createConfetti() {
-      const colors = ['#00ffc3', '#ff5722', '#ffeb3b', '#e91e63', '#9c27b0', '#3f51b5'];
-      const container = document.querySelector('.container');
-      
-      for (let i = 0; i < 50; i++) {
-        const confetti = document.createElement('div');
-        confetti.className = 'confetti';
-        confetti.style.left = Math.random() * 100 + '%';
-        confetti.style.top = -10 + 'px';
-        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-        confetti.style.width = Math.random() * 8 + 5 + 'px';
-        confetti.style.height = Math.random() * 8 + 5 + 'px';
-        confetti.style.opacity = '1';
-        confetti.style.position = 'absolute';
-        confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
-        container.appendChild(confetti);
-        
-        const animationDuration = Math.random() * 3 + 2;
-        
-        confetti.animate([
-          { transform: `translate(0, 0) rotate(0deg)`, opacity: 1 },
-          { transform: `translate(${Math.random() * 200 - 100}px, ${window.innerHeight}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
-        ], {
-          duration: animationDuration * 1000,
-          easing: 'cubic-bezier(0.1, 0.8, 0.9, 1)'
-        });
-        
-        setTimeout(() => {
-          confetti.remove();
-        }, animationDuration * 1000);
-      }
+    if (reward.startsWith("₹")) {
+      const amount = parseFloat(reward.replace("₹", ""));
+      let currentBalance = parseFloat(localStorage.getItem("userBalance")) || 0;
+      currentBalance += amount;
+      localStorage.setItem("userBalance", currentBalance.toFixed(2));
     }
-  </script>
+    
+    const userRef = ref(db, "users/" + userID);
+    get(userRef).then(snapshot => {
+      const userData = snapshot.val();
+      let currentRewards = [];
+      if (userData && userData.rewards) {
+        currentRewards = userData.rewards;
+      }
+      currentRewards.push(reward);
+      update(userRef, {
+        rewards: currentRewards
+      });
+    });
+  }
+  
+  function showError(message) {
+    document.getElementById("errorText").textContent = message;
+    document.getElementById("errorMsg").classList.remove("hidden");
+    document.getElementById("successMsg").classList.add("hidden");
+  }
+  
+  document.getElementById("closeBtn").addEventListener("click", function() {
+    document.getElementById("successMsg").classList.add("hidden");
+    document.getElementById("redeemCode").value = "";
+  });
+  
+  // Check Balance Button with enhanced animation
+  document.getElementById("checkBalanceBtn").addEventListener("click", (e) => {
+    e.preventDefault();
+    const spinner = document.getElementById("spinner");
+    spinner.style.display = "inline-block";
+    document.getElementById("checkBalanceBtn").disabled = true;
+    
+    // Add ripple effect
+    const btn = e.target;
+    const rect = btn.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const ripple = document.createElement("span");
+    ripple.style.position = "absolute";
+    ripple.style.width = "5px";
+    ripple.style.height = "5px";
+    ripple.style.borderRadius = "50%";
+    ripple.style.backgroundColor = "rgba(255,255,255,0.5)";
+    ripple.style.left = `${x}px`;
+    ripple.style.top = `${y}px`;
+    ripple.style.transform = "translate(-50%, -50%)";
+    ripple.style.animation = "ripple 1s linear";
+    btn.appendChild(ripple);
+    
+    setTimeout(() => {
+      ripple.remove();
+    }, 1000);
+    
+    setTimeout(() => {
+      window.location.href = "balance.html";
+    }, 1500);
+  });
+  
+  // Confetti effect
+  function createConfetti() {
+    const colors = ['#00ffc3', '#ff5722', '#ffeb3b', '#e91e63', '#9c27b0', '#3f51b5'];
+    const container = document.querySelector('.container');
+    
+    for (let i = 0; i < 50; i++) {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      confetti.style.left = Math.random() * 100 + '%';
+      confetti.style.top = -10 + 'px';
+      confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      confetti.style.width = Math.random() * 8 + 5 + 'px';
+      confetti.style.height = Math.random() * 8 + 5 + 'px';
+      confetti.style.opacity = '1';
+      confetti.style.position = 'absolute';
+      confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+      container.appendChild(confetti);
+      
+      const animationDuration = Math.random() * 3 + 2;
+      
+      confetti.animate([
+        { transform: `translate(0, 0) rotate(0deg)`, opacity: 1 },
+        { transform: `translate(${Math.random() * 200 - 100}px, ${window.innerHeight}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+      ], {
+        duration: animationDuration * 1000,
+        easing: 'cubic-bezier(0.1, 0.8, 0.9, 1)'
+      });
+      
+      setTimeout(() => {
+        confetti.remove();
+      }, animationDuration * 1000);
+    }
+  }
+</script>
 </body>
 </html>
